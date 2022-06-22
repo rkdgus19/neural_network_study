@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 class LR_DsGenerator:
@@ -101,6 +102,7 @@ lr = 0.01
 losses = []
 w_list, b_list = [model.w], [model.b]
 
+cmap = cm.get_cmap('rainbow', lut = n_iter)
 for iter_idx in range(n_iter):
     x, y = X[iter_idx], Y[iter_idx]
 
@@ -116,15 +118,19 @@ for iter_idx in range(n_iter):
     w_list.append(model.w)
     b_list.append(model.b)
 
+    w, b = model.get_params()
+    y_lim = w*x_lim + b
+    ax_ds.plot(x_lim, y_lim, color=cmap(iter_idx), alpha = 0.2)
+
 # visualization
-# _, ax = plt.subplots(figsize=(10, 5))
-# ax.plot(losses)
-#
-# _, ax = plt.subplots(1, 1, figsize=(10,5))
-# ax.plot(w_list, label='weight', color='red')
-# ax.plot(b_list, label='bias', color='blue')
-# ax.axhline(y=ds_gen.w, color='red', linestyle=':')
-# ax.axhline(y=ds_gen.b, color='blue', linestyle=':')
-#
-# ax.legend()
+_, ax = plt.subplots(figsize=(10, 5))
+ax.plot(losses)
+
+_, ax = plt.subplots(1, 1, figsize=(10,5))
+ax.plot(w_list, label='weight', color='red')
+ax.plot(b_list, label='bias', color='blue')
+ax.axhline(y=ds_gen.w, color='red', linestyle=':')
+ax.axhline(y=ds_gen.b, color='blue', linestyle=':')
+
+ax.legend()
 plt.show()
