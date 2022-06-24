@@ -78,20 +78,23 @@ class Affine:
 
 
 class Model:
-    def __init__(self, affine, sigmoid):
+    def __init__(self):
         # import the Affine, Activation Class
         #
-        self.affClass = affine
-        self.actClass = sigmoid
+        self.affClass = Affine()
+        self.actClass = Sigmoid()
 
     def forward(self, x):
         self.x = x
-        a = self.actClass.forward(self.affClass.forward(x))
-        return a
+        x = self.actClass.forward(self.affClass.forward(x))
+        return x
 
     def backward(self, dJ_dpred):
         dj_dz = self.actClass.backward(dJ_dpred)
         self.affClass.backward(dj_dz)
+
+    def get_params(self):
+        return self.affClass.get_params()
 
 
 
@@ -112,15 +115,50 @@ class BCE:
         return dJ_pred
 
 
-affine = Affine()
-dataset = DatasetGenerator()
-sigmoid = Sigmoid()
-model = Model(affine, sigmoid)
-x, y = dataset.get_ds()
+if __name__ == "__main__":
+    ds_gen = DatasetGenerator(N=1000, w=3, b=-2)
+    X, Y = ds_gen.get_ds()
+    ax_ds = ds_gen.visualize_ds()
 
-pred = model.forward(x)
-loss = BCE()
-loss.forward(y, pred)
+    x_lim = np.array(ax_ds.get_xlim())
 
-dd = loss.backward()
-model.backward(dd)
+    model = Model()
+    loss_function = BCE()
+
+    # 학습 가능하도록 구현하기(다시 보기)
+    n_iter = 1000
+    lr = 1e-2
+    losses = []
+
+    db_list = []
+    w_list, b_list = [model.affClass.w], [model.affClass.b]
+
+    cmap = cm.get_cmap('rainbow', lut=n_iter)
+    for iter_idx in range(n_iter):
+        x, y = X[iter_idx], Y[iter_idx]
+
+        pred = model.forward(x)
+        J = loss_function.forward(y, pred)
+        losses.append(J)
+
+        dJ_dpred = loss_function.backward()
+        model.backward(dJ_dpred)
+
+        w, b = model.get_params()
+
+        w_list.append(w)
+        b_list.append(b)
+        db_list.append(-b / w)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(losses)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(db_list)
+    ax.plot(w_list, label='weight', color='red')
+    ax.plot(b_list, label='bias', color='blue')
+    ax.axhline(y=ds_gen.w, color='red', linestyle=':')
+    ax.axhline(y=ds_gen.b, color='red', linestyle=':')
+
+    ax.legend()
+    plt.show()
